@@ -9,10 +9,22 @@ CREATE TABLE public.users (
 	tax_code varchar(16) NOT NULL,
 	nome varchar(50) NOT NULL,
 	cognome varchar(50) NOT NULL,
-	CONSTRAINT users_codice_fiscale_key UNIQUE (tax_code),
 	CONSTRAINT users_email_key UNIQUE (email),
 	CONSTRAINT users_pkey PRIMARY KEY (id)
 );
+
+--Insert first users
+INSERT INTO public.users
+(id, username, email, tax_code, nome, cognome)
+VALUES(1, 'admin', 'admin_user@intesigroup.com', 'WKEKJFFJJRRIEIEI', 'admin', 'admin');
+INSERT INTO public.users
+(id, username, email, tax_code, nome, cognome)
+VALUES(2, 'creator_user', 'creator_user@intesigroup.com', 'SMIJNE75B59T227Z', 'creator', 'user');
+INSERT INTO public.users
+(id, username, email, tax_code, nome, cognome)
+VALUES(3, 'reader_user', 'reader_user@intesigroup.com', 'SMIJNE75B59T117Z', 'reader', 'user');
+
+
 
 
 CREATE TABLE roles (
@@ -25,7 +37,8 @@ INSERT INTO roles (name) VALUES
     ('OPERATOR'),
     ('MAINTAINER'),
     ('DEVELOPER'),
-    ('REPORTER');
+    ('REPORTER'),
+    ('USER');
 
 -- Drop table
 
@@ -38,3 +51,14 @@ CREATE TABLE public.user_roles (
 	CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
 	CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+INSERT INTO public.user_roles
+(user_id, role_id)
+VALUES(1, 1);
+INSERT INTO public.user_roles
+(user_id, role_id)
+VALUES(2, 2);
+INSERT INTO public.user_roles
+(user_id, role_id)
+VALUES(3, 6);
+
