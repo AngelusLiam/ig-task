@@ -2,16 +2,35 @@ spring:
   application:
     name: demo
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://idpgw.test4mind.com/realms/demo-interview
+          jwk-set-uri: https://idpgw.test4mind.com/realms/demo-interview/protocol/openid-connect/certs
+
   datasource:
-    url: ${DATASOURCE_URL}
-    username: ${DATASOURCE_USERNAME}
-    password: ${DATASOURCE_PASSWORD}
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost/mydatabase}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
 
+ig:
+  security:
+    jwt:
+      upn-claim: preferred_username
+      name-claim: name
+      roles: demo-task-role
+      email: email
+  provider:
+    token-url: https://idpgw.test4mind.com/realms/demo-interview/protocol/openid-connect/token
+    client-id: ${CLIENT_ID:demo-task}
+    client-secret: ${CLIENT_SECRET:8PDH3fflpbzJyx2rAy39SPB60OuSjeX6}
+    grant-type: password
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

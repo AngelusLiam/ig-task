@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,7 +30,6 @@ public class UserServiceImpl implements IUserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final UserRoleRepository userRoleRepository;
 
     @Override
     public Page<UserDTO> getAllUsers(Pageable pageable) {
@@ -138,18 +140,44 @@ public class UserServiceImpl implements IUserService {
 
 
     private UserDTO convertToDTO(User user) {
-        return UserDTO.builder()
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_USER");
+
+        UserDTO.UserDTOBuilder userDTOBuilder = UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .codiceFiscale(user.getTaxCode())
                 .nome(user.getNome())
-                .cognome(user.getCognome())
-                .roles(user.getUserRoles().stream().map(r -> RoleDTO.builder()
-                                .id(r.getPk().getRole().getId())
-                                .name(r.getPk().getRole().getName())
-                                .build())
-                        .collect(Collectors.toSet()))
-                .build();
+                .cognome(user.getCognome());
+
+        if ("ROLE_ADMIN".equals(role) || "ROLE_OWNER".equals(role)) {
+            userDTOBuilder.codiceFiscale(user.getTaxCode());
+            userDTOBuilder.roles(user.getUserRoles().stream()
+                    .map(r -> RoleDTO.builder()
+                            .id(r.getPk().getRole().getId())
+                            .name(r.getPk().getRole().getName())
+                            .build())
+                    .collect(Collectors.toSet()));
+        }
+
+        if ("ROLE_OPERATOR".equals(role)) {
+            userDTOBuilder.codiceFiscale(null);
+            userDTOBuilder.roles(user.getUserRoles().stream()
+                    .map(r -> RoleDTO.builder()
+                            .id(r.getPk().getRole().getId())
+                            .name(r.getPk().getRole().getName())
+                            .build())
+                    .collect(Collectors.toSet()));
+        }
+
+        if ("ROLE_USER".equals(role)) {
+            userDTOBuilder.codiceFiscale(null);
+            userDTOBuilder.roles(null);
+        }
+
+        return userDTOBuilder.build();
     }
 }

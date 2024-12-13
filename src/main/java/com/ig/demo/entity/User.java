@@ -39,6 +39,6 @@ public class User {
     private String cognome;
 
     // RELAZIONE USER-ROLE
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, mappedBy = "pk.user", orphanRemoval = true)
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, mappedBy = "pk.user", orphanRemoval = true)
     private Set<UserRole> userRoles = new LinkedHashSet<>();
 }

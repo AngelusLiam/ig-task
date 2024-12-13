@@ -3,14 +3,22 @@ package com.ig.demo.controller;
 import com.ig.demo.dto.UserDTO;
 import com.ig.demo.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import jakarta.websocket.server.PathParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+@SecurityScheme(
+        ref = "AUTHORIZATION",
+        type = SecuritySchemeType.APIKEY
+)
 @CrossOrigin
 @RequiredArgsConstructor
 @RestController
@@ -25,7 +33,9 @@ public class UserController {
             description = "Restituisce tutti gli utenti"
     )
     @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_USER')")
     public ResponseEntity<Page<UserDTO>> getAllUsers(Pageable pageable) {
+        SecurityContextHolder.getContext().getAuthentication();
         log.info("[UserController] getAllUsers");
         return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
@@ -35,6 +45,7 @@ public class UserController {
             description = "Restituisce il dettaglio di un utente"
     )
     @GetMapping("{id}")
+    @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_USER')")
     public ResponseEntity<UserDTO> getUser(@PathVariable Long id){
         log.info("[UserController] getUser");
         return ResponseEntity.ok(userService.getUserDetail(id));
@@ -45,6 +56,7 @@ public class UserController {
             description = "Inserisce un nuovo utente"
     )
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR')")
     public ResponseEntity<UserDTO> insertUser(@RequestBody UserDTO dto){
         log.info("[UserController] insertUser");
         return ResponseEntity.ok(userService.insertUser(dto));
@@ -55,6 +67,7 @@ public class UserController {
             description = "Aggiorna un utente"
     )
     @PutMapping("{id}")
+    @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR')")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id,
                                               @RequestBody UserDTO dto){
         log.info("[UserController] updateUser");
@@ -66,6 +79,7 @@ public class UserController {
             description = "Cancella un utente"
     )
     @DeleteMapping("{id}")
+    @PreAuthorize("hasRole('ROLE_OWNER', 'ROLE_ADMIN')")
     public ResponseEntity<String> deleteUser(@PathVariable Long id){
         log.info("[UserController] deleteUser");
         userService.deleteUser(id);
