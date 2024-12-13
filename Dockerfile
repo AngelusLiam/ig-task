@@ -32,4 +32,4 @@ USER spring:spring
 
 WORKDIR ${APP_HOME_DIR}
 
-ENTRYPOINT ["java", "-Dspring.profiles.active=dev", "-jar", "application.jar"]
+ENTRYPOINT ["java", "-jar", "application.jar"]

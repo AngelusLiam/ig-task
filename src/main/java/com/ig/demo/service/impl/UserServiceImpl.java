@@ -38,7 +38,6 @@ public class UserServiceImpl implements IUserService {
     @Override
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         Page<User> usersPage = userRepository.findAll(pageable);
-        eventPublisher.publishEvent(new UserCreatedEvent(this, "", ""));
         return usersPage.map(this::convertToDTO);
     }
 
