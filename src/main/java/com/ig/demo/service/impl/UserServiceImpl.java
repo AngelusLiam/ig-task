@@ -6,11 +6,13 @@ import com.ig.demo.entity.Role;
 import com.ig.demo.entity.User;
 import com.ig.demo.entity.UserRole;
 import com.ig.demo.entity.UserRoleId;
+import com.ig.demo.event.UserCreatedEvent;
 import com.ig.demo.repository.RoleRepository;
 import com.ig.demo.repository.UserRepository;
 import com.ig.demo.repository.UserRoleRepository;
 import com.ig.demo.service.IUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,12 +30,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
 
+    private final ApplicationEventPublisher eventPublisher;
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
     @Override
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         Page<User> usersPage = userRepository.findAll(pageable);
+        eventPublisher.publishEvent(new UserCreatedEvent(this, "", ""));
         return usersPage.map(this::convertToDTO);
     }
 
@@ -51,6 +56,8 @@ public class UserServiceImpl implements IUserService {
 
         User user = convertToEntity(null, userDTO, roles);
         User u = userRepository.save(user);
+
+        eventPublisher.publishEvent(new UserCreatedEvent(this, userDTO.getUsername(), userDTO.getEmail()));
 
         return convertToDTO(u);
     }

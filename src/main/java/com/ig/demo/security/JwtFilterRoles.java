@@ -45,9 +45,6 @@ public class JwtFilterRoles extends OncePerRequestFilter{
 			
 			Map<String, Object> claims = ((JwtAuthenticationToken) authentication).getToken().getClaims();
 			
-			String upn =	(String) claims.get(claimConfig.getUpnClaim()) ;
-			List<String> ruoli = claimConfig.getRoles();
-			String name = (String) claims.get(claimConfig.getNameClaim()) ;
 			String email = (String) claims.get(claimConfig.getEmail()) ;
 
 			Optional<User> userOptional = userRepository.findByEmail(email);

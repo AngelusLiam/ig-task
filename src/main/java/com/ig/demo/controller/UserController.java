@@ -1,7 +1,9 @@
 package com.ig.demo.controller;
 
 import com.ig.demo.dto.UserDTO;
+import com.ig.demo.security.CustomUsernamePasswordAuthenticationToken;
 import com.ig.demo.service.IUserService;
+import com.ig.demo.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -35,8 +37,7 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_USER')")
     public ResponseEntity<Page<UserDTO>> getAllUsers(Pageable pageable) {
-        SecurityContextHolder.getContext().getAuthentication();
-        log.info("[UserController] getAllUsers");
+        log.info("[AuthenticatedUser: {}] || [UserController] getAllUsers", SecurityUtils.getLoggedUsername());
         return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
 
@@ -47,7 +48,7 @@ public class UserController {
     @GetMapping("{id}")
     @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_USER')")
     public ResponseEntity<UserDTO> getUser(@PathVariable Long id){
-        log.info("[UserController] getUser");
+        log.info("[AuthenticatedUser: {}] || [UserController] getUser", SecurityUtils.getLoggedUsername());
         return ResponseEntity.ok(userService.getUserDetail(id));
     }
 
@@ -58,7 +59,7 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR')")
     public ResponseEntity<UserDTO> insertUser(@RequestBody UserDTO dto){
-        log.info("[UserController] insertUser");
+        log.info("[AuthenticatedUser: {}] || [UserController] insertUser", SecurityUtils.getLoggedUsername());
         return ResponseEntity.ok(userService.insertUser(dto));
     }
 
@@ -70,7 +71,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_OPERATOR')")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id,
                                               @RequestBody UserDTO dto){
-        log.info("[UserController] updateUser");
+        log.info("[AuthenticatedUser: {}] || [UserController] updateUser", SecurityUtils.getLoggedUsername());
         return ResponseEntity.ok(userService.updateUser(id, dto));
     }
 
@@ -81,7 +82,7 @@ public class UserController {
     @DeleteMapping("{id}")
     @PreAuthorize("hasRole('ROLE_OWNER', 'ROLE_ADMIN')")
     public ResponseEntity<String> deleteUser(@PathVariable Long id){
-        log.info("[UserController] deleteUser");
+        log.info("[AuthenticatedUser: {}] || [UserController] deleteUser", SecurityUtils.getLoggedUsername());
         userService.deleteUser(id);
         return ResponseEntity.ok("Success");
     }
