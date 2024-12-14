@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -29,9 +31,11 @@ import java.util.stream.Collectors;
 
 @Component("jwtFilterRoles")
 @RequiredArgsConstructor
-@Profile({"default"})
 @Log4j2
 public class JwtFilterRoles extends OncePerRequestFilter{
+
+	@Value("${ig.security.use-internal-check}")
+	boolean useInternalCheck;
 	
 	private final UserRepository userRepository;
 	private final UserRoleRepository userRoleRepository;
@@ -44,36 +48,58 @@ public class JwtFilterRoles extends OncePerRequestFilter{
 		if(authentication != null){
 			
 			Map<String, Object> claims = ((JwtAuthenticationToken) authentication).getToken().getClaims();
-			
-			String email = (String) claims.get(claimConfig.getEmail()) ;
-
-			Optional<User> userOptional = userRepository.findByEmail(email);
+			List<String> roles = extractRolesFromJwt(authentication);
 			User user = null;
-			Set<Role> ruolo = null;
-			if (userOptional.isPresent()) {
-				user = userOptional.get();
-			} else {
-				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+			if (BooleanUtils.isTrue(useInternalCheck)) {
+				String email = (String) claims.get(claimConfig.getEmail());
+
+				Optional<User> userOptional = userRepository.findByEmail(email);
+				if (userOptional.isPresent()) {
+					user = userOptional.get();
+				} else {
+					throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+				}
 			}
 
 			List<GrantedAuthority> authorities = new ArrayList<>();
 			Collection<SimpleGrantedAuthority> oldAuthorities = (Collection<SimpleGrantedAuthority>)SecurityContextHolder.getContext().getAuthentication().getAuthorities();
-			user.getUserRoles().forEach(r -> authorities.add(new SimpleGrantedAuthority("ROLE_" + r.getPk().getRole().getName())));
-			authorities.addAll(oldAuthorities);
-			SecurityContextHolder.getContext().setAuthentication(
-					new CustomUsernamePasswordAuthenticationToken(
-							SecurityContextHolder.getContext().getAuthentication().getPrincipal(),
-							SecurityContextHolder.getContext().getAuthentication().getCredentials(),
-							authorities,
-                            Math.toIntExact(user.getId()),
-							user.getNome(),
-							user.getCognome(),
-							user.getUsername())
-					);
-
-
-			
+			if (BooleanUtils.isTrue(useInternalCheck)) {
+				if (Objects.requireNonNull(user).getUserRoles() != null && !user.getUserRoles().isEmpty()) {
+					user.getUserRoles().forEach(r -> authorities.add(new SimpleGrantedAuthority("ROLE_" + r.getPk().getRole().getName())));
+				}
+				authorities.addAll(oldAuthorities);
+				SecurityContextHolder.getContext().setAuthentication(
+						new CustomUsernamePasswordAuthenticationToken(
+								SecurityContextHolder.getContext().getAuthentication().getPrincipal(),
+								SecurityContextHolder.getContext().getAuthentication().getCredentials(),
+								authorities,
+						Math.toIntExact(user.getId()),
+						user.getNome(),
+						user.getCognome(),
+						user.getUsername())
+				);
+			} else {
+				roles.forEach(r -> authorities.add(new SimpleGrantedAuthority("ROLE_" + r)));
+				authorities.addAll(oldAuthorities);
+				SecurityContextHolder.getContext().setAuthentication(
+						new CustomUsernamePasswordAuthenticationToken(
+								SecurityContextHolder.getContext().getAuthentication().getPrincipal(),
+								SecurityContextHolder.getContext().getAuthentication().getCredentials(),
+								authorities)
+				);
+			}
 		}
 		filterChain.doFilter(request,response);
 	}
+
+	public List<String> extractRolesFromJwt(Authentication authentication) {
+		Map<String, Object> claims = ((JwtAuthenticationToken) authentication).getToken().getClaims();
+		Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
+
+		if (realmAccess != null) {
+			return (List<String>) realmAccess.get("roles");
+		}
+		return List.of();
+	}
+
 }

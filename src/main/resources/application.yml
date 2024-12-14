@@ -21,6 +21,7 @@ spring:
 
 ig:
   security:
+    use-internal-check: true
     jwt:
       upn-claim: preferred_username
       name-claim: name

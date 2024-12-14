@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
+import java.util.List;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
@@ -38,4 +39,7 @@ public class CustomUsernamePasswordAuthenticationToken extends UsernamePasswordA
 	}
 
 
+	public CustomUsernamePasswordAuthenticationToken(Object principal, Object credentials, List<GrantedAuthority> authorities) {
+		super(principal, credentials, authorities);
+	}
 }
